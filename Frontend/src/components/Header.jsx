@@ -1,16 +1,66 @@
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { RiArrowDropDownLine } from "react-icons/ri";
 import { MdFavoriteBorder, MdKeyboardArrowRight } from "react-icons/md";
 import { AiOutlineShoppingCart } from "react-icons/ai";
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import "./Header.css"
 import { IoMenuSharp } from "react-icons/io5";
 import { FaChevronDown } from "react-icons/fa";
 import { RiDiscountPercentFill } from 'react-icons/ri';
 import { useSelector } from "react-redux";
 
+import { MdClose, MdKeyboardDoubleArrowLeft } from "react-icons/md";
+import { BiSortAlt2 } from "react-icons/bi";
+import { FiShoppingBag } from "react-icons/fi";
+import { GoStack } from "react-icons/go";
+import { HiOutlineEye } from "react-icons/hi2";
+import { IoMdClose } from "react-icons/io";
+import { FaMinus } from "react-icons/fa6";
+
 
 function Header() {
+
+    const navigate  = useNavigate();
+    const location = useLocation();
+    const [isSearchCategory,setISSearchCategory] = useState(false);
+    const [searchCategory,setSearchCategory] = useState('All Categories');
+
+    const [searchText,setSearchText] = useState('');
+    const [toggleSearch, setToggleSearch] = useState(false);
+
+    const searchbarRef = useRef();
+    const searchModalRef = useRef();
+    const headerRef = useRef(null);
+    const [isFixed, setIsFixed] = useState(false);
+
+    useEffect(()=>{
+        const handleOutsideClick = (e) => {
+            console.log('hello',e.target)
+            if (searchbarRef.current && !searchbarRef.current.contains(e.target) && searchModalRef.current && !searchModalRef.current.contains(e.target)) {
+                setToggleSearch(()=>false);
+            }
+        };
+
+        const id = document.getElementById('searchbar');
+        id.addEventListener('focus', ()=>setToggleSearch(true))
+        // id.addEventListener('change', ()=>setToggleSearch(true))
+
+        if (toggleSearch) {
+            document.addEventListener('mousedown', handleOutsideClick);
+        } else {
+            document.removeEventListener('mousedown', handleOutsideClick);
+        }
+
+        return () => {
+            document.removeEventListener('mousedown', handleOutsideClick);
+        };
+    },[toggleSearch])
+
+    useEffect(() => {
+        setToggleSearch(false);
+    }, [location]);
+
+    const {details} = useSelector((state)=>state.products);
 
     const {cart} = useSelector((state)=>state.shopping)
 
@@ -37,11 +87,38 @@ function Header() {
           }, 10); // Small delay to ensure the height is set before collapsing
         }
 
-      }
+    }
+
+    const handleSearchCategory = (e)=>{
+        setSearchCategory(e.target.textContent);
+        setISSearchCategory(()=>false);
+    }
+
+
+    useEffect(() => {
+        const handleScroll = () => {
+            if (headerRef.current) {
+                setIsFixed((old)=>{
+                    if(old==false){
+                        return window.scrollY > 2*headerRef.current.offsetHeight
+                    }
+                    else{
+                        return window.scrollY > 0
+                    }
+                });
+            }
+        };
+
+        window.addEventListener('scroll', handleScroll);
+
+        return () => {
+            window.removeEventListener('scroll', handleScroll);
+        };
+    }, []);
 
     return (
         <>
-            <div className="z-50">
+            <div className={`z-50 w-full bg-white shadow-md ${isFixed ? 'top-0' : ''}`} ref={headerRef}>
                 {/* Main Header */}
                 {/* <div className="bg-[#253380] text-white text-sm font-semibold px-10 py-2 border-b border-blue-800">
                     <div className="flex justify-between">
@@ -67,7 +144,7 @@ function Header() {
                 </div> */}
 
                 {/* Repsonsive menu  */}
-                <div className="bg-[#253380] text-white text-sm font-semibold px-10 pt-3 max-md:px-2 md:hidden max-md:block">
+                <div className="bg-[#253380] z-50 text-white text-sm font-semibold px-10 pt-3 max-md:px-2 md:hidden max-md:block">
                     <div className="flex justify-between">
                         <div className="flex items-center cursor-pointer" onClick={toogleMobileMenu}><IoMenuSharp size={28}/></div>
                         <div className=" h-1/6 overflow-hidden">
@@ -228,8 +305,85 @@ function Header() {
                 </div>
 
                 {/* Navbar */}
-                <div className="bg-[#253380] text-white text-sm font-semibold px-10 py-6 max-md:px-2">
-                    <div className="flex justify-between">
+                <div className="bg-[#253380] relative text-white text-sm font-semibold z-40 px-10 py-6 max-md:px-2">
+                    
+                        {toggleSearch && <>
+                            <div className="fixed inset-0 -z-40 h-full bg-black opacity-50"></div>
+                            <div ref={searchModalRef} className="absolute bottom-0 left-0 z-50 h-[70vh] translate-y-full text-black bg-white w-screen px-10 py-6 max-md:px-2">
+                                <div className="text-xl mb-4">Need Inspiration?</div>
+                                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 max-h-[40vh]  lg:grid-cols-4 gap-4 my-5 overflow-y-scroll">
+                                    {/* {isModalOpen && <Modal isOpen={isModalOpen} onClose={closeModal} product={productModal}/>} */}
+                                    {details.slice(0,8).map((product,index)=>{
+                                        return (
+                                            <div className="flex flex-col items-center mx-auto max-w-[258px] w-full px-1 py-4">
+                                                <div className="h-auto w-auto relative group overflow-hidden cursor-pointer" onClick={()=>navigate(`/products/${product.productId}`)}>
+                                                    <img
+                                                        className="pointer-events-none"
+                                                        src={`${product.images.main}`}
+                                                        alt=""
+                                                    />
+                                                    {/* <div className="absolute h-full flex flex-col top-0 right-0 md:opacity-0  group-hover:-translate-x-1 group-hover:opacity-100 transition-all duration-500 ease-in-out">
+                                                        <button
+                                                            className="mb-1 mt-6 p-2 bg-white rounded-full shadow-lg transition duration-500 hover:bg-black hover:text-white"
+                                                            title="Add to Cart"
+                                                            onClick={(event)=>{handleCart(event,product)}}
+                                                        >
+                                                            <FiShoppingBag />
+                                                        </button>
+                                                        <button
+                                                            className="my-1 p-2 bg-white rounded-full shadow-lg transition duration-500 hover:bg-black hover:text-white"
+                                                            title="Add to Wishlist"
+                                                            onClick={(e)=>{e.stopPropagation()}}
+                                                        >
+                                                            <MdFavoriteBorder />
+                                                        </button>
+                                                        <button
+                                                            className="my-1 p-2 bg-white rounded-full shadow-lg transition duration-500 hover:bg-black hover:text-white"
+                                                            title="Add to Compare"
+                                                            onClick={(e)=>{e.stopPropagation()}}
+                                                        >
+                                                            <GoStack />
+                                                        </button>
+                                                        <button
+                                                            className="my-1 p-2 bg-white rounded-full shadow-lg transition duration-500 hover:bg-black hover:text-white"
+                                                            title="Quick View"
+                                                            onClick={(e)=>{e.stopPropagation(); openModal(e,product)}}
+                                                        >
+                                                            <HiOutlineEye />
+                                                        </button>
+                                                    </div>
+                                                    <div className="absolute top-1 left-1">
+                                                        <span className="rounded-full bg-blue-400 text-white font-semibold  px-2 py-0.5 text-sm">
+                                                            -{product.discountPercentage}%
+                                                        </span>
+                                                    </div> */}
+                                                </div>
+                                                <div className="flex flex-col justify-between flex-1">
+                                                    <div className="text-gray-400 text-xs tracking-wide font-semibold">
+                                                        {product.brand} 
+                                                    </div>
+                                                    <div className="text-sm tracking-wide cursor-pointer" onClick={()=>navigate(`/products/${product.productId}`)}>
+                                                        {product.name}
+                                                    </div>
+                                                    <div>*****</div>
+                                                    <div className="text-lg flex flex-wrap items-baseline">
+                                                        <div>${product.discountedPrice}</div>
+                                                        <div className="text-sm text-gray-500 font-semibold line-through px-2">
+                                                            ${product.price}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )
+                                    })}
+                                </div>
+                                <div className="flex justify-center">
+                                    <button className="px-10 py-3 bg-black text-white rounded-full">View All</button>
+                                </div>
+                        </div>
+                        </>}
+
+                    <div className="flex justify-between ">
                         <div className="w-1/6 max-lg:hidden">
                         <Link to='/'>
                             <img
@@ -239,28 +393,50 @@ function Header() {
                         </Link>
                         </div>
                         <div className="w-2/4 max-lg:w-full flex justify-center text-black">
-                            <div className="categories max-md:hidden flex rounded-l-full bg-white text-black items-center px-6 border-r border-r-gray-600">
-                                <div className="text-nowrap">All Categories</div>
+                            <div className="relative categories max-md:hidden cursor-pointer flex rounded-l-full bg-white text-black items-center px-6 border-r border-r-gray-600" onClick={()=>setISSearchCategory((old)=>!old)}>
+                                <div className="text-nowrap" >{searchCategory}</div>
                                 <span className="ml-4 max-md:ml-1">
                                     <RiArrowDropDownLine />
                                 </span>
+                                {isSearchCategory && <div className="absolute translate-y-full bottom-0 left-0 bg-white z-50 w-full border" onClick={(e)=>e.stopPropagation()}>
+                                    <div className="px-0.5">
+                                        <input type="text"  className="w-full p-2 border my-1"/>
+                                        <div className="p-1 max-h-40 overflow-x-auto">
+                                            <ul>
+                                                <li className="py-2 px-1 hover:bg-blue-400 hover:text-white" onClick={(e)=>{handleSearchCategory(e)}}>All Categories</li>
+                                                <li className="py-2 px-1 hover:bg-blue-400 hover:text-white" onClick={(e)=>{handleSearchCategory(e)}}>Macbook & PCs</li>
+                                                <li className="py-2 px-1 hover:bg-blue-400 hover:text-white" onClick={(e)=>{handleSearchCategory(e)}}>OLED & Smart TVs</li>
+                                                <li className="py-2 px-1 hover:bg-blue-400 hover:text-white" onClick={(e)=>{handleSearchCategory(e)}}>OLED & Smart TVs</li>
+                                                <li className="py-2 px-1 hover:bg-blue-400 hover:text-white" onClick={(e)=>{handleSearchCategory(e)}}>OLED & Smart TVs</li>
+                                                <li className="py-2 px-1 hover:bg-blue-400 hover:text-white" onClick={(e)=>{handleSearchCategory(e)}}>OLED & Smart TVs</li>
+                                                <li className="py-2 px-1 hover:bg-blue-400 hover:text-white" onClick={(e)=>{handleSearchCategory(e)}}>OLED & Smart TVs</li>
+                                                <li className="py-2 px-1 hover:bg-blue-400 hover:text-white">OLED & Smart TVs</li>
+                                                <li className="py-2 px-1 hover:bg-blue-400 hover:text-white">OLED & Smart TVs</li>
+                                                <li className="py-2 px-1 hover:bg-blue-400 hover:text-white">OLED & Smart TVs</li>
+                                            </ul>
+                                        </div>
+                                    </div>
+                                </div>}
                             </div>
 
-                            <div className="w-full">
+                            <div className="w-full" >
                                 <input
+                                    id="searchbar"
                                     className="h-full w-full px-3 py-2 focus:outline-0 max-md:rounded-l-full"
                                     type="text"
                                     placeholder="I'm looking for"
+                                    ref={searchbarRef}
                                 />
+                                
                             </div>
                             <div>
-                                <button className="h-full w-full max-md:w-auto categories flex rounded-r-full bg-blue-500 text-white items-center px-6 max-sm:px-2 border-r border-r-gray-600">
+                                <button id="searchbar-products" className="h-full w-full max-md:w-auto categories flex rounded-r-full bg-blue-500 text-white items-center px-6 max-sm:px-2 border-r border-r-gray-600">
                                     Search
                                 </button>
                             </div>
                         </div>
                         <div className="w-1/5 flex max-md:hidden justify-evenly">
-                            <div className="flex max-md:hidden">
+                            <div className="flex max-md:hidden cursor-pointer" onClick={()=>navigate('/login')}>
                                 <div className="h-full flex items-center mr-1">
                                     <svg
                                         width="23"
@@ -273,7 +449,7 @@ function Header() {
                                         <path d="M8.49966 10.2C9.83622 10.2002 11.1195 9.67091 12.0732 8.72594C13.027 7.78097 13.5752 6.49588 13.5997 5.14718C13.5997 3.78206 13.0623 2.47286 12.1059 1.50757C11.1495 0.542291 9.85226 0 8.49966 0C7.14705 0 5.84985 0.542291 4.89341 1.50757C3.93698 2.47286 3.39966 3.78206 3.39966 5.14718C3.42416 6.49588 3.97228 7.78097 4.92607 8.72594C5.87987 9.67091 7.1631 10.2002 8.49966 10.2ZM5.09966 5.14718C5.09966 4.2371 5.45787 3.3643 6.09549 2.72078C6.73312 2.07725 7.59792 1.71573 8.49966 1.71573C9.40139 1.71573 10.2662 2.07725 10.9038 2.72078C11.5414 3.3643 11.8997 4.2371 11.8997 5.14718C11.8997 6.05726 11.5414 6.93006 10.9038 7.57359C10.2662 8.21711 9.40139 8.57864 8.49966 8.57864C7.59792 8.57864 6.73312 8.21711 6.09549 7.57359C5.45787 6.93006 5.09966 6.05726 5.09966 5.14718Z"></path>
                                     </svg>
                                 </div>
-                                <div className=" flex flex-col justify-center">
+                                <div className=" flex flex-col justify-center " >
                                     <span className="text-xs">Sign In</span>
                                     <span className="text-xs">Account </span>
                                 </div>
@@ -471,8 +647,8 @@ function Header() {
                                         <Link to='/'>Home</Link>
                                         <div className='font-semibold px-2'><FaChevronDown size={10}/></div>
                                     </div>
-                                    <div className='absolute drop-1 bg-gray-100 w-56'>
-                                        <ul>
+                                    <div className='absolute drop-1 bg-gray-100 w-56 z-50'>
+                                        <ul className="">
                                             <li className='hover:translate-x-2 transition-all duration-400 ease-out hover:text-black'>hey</li>
                                             <li className='hover:translate-x-2 transition-all duration-400 hover:text-black'>hey</li>
                                             <li className='hover:translate-x-2 transition-all duration-400 hover:text-black'>hey</li>
@@ -484,7 +660,7 @@ function Header() {
                                         <Link to='/shop'>Shop</Link>
                                         <div className='font-semibold px-2'><FaChevronDown size={10}/></div>
                                     </div>
-                                    <div className='absolute drop-1 bg-gray-100 w-56'>
+                                    <div className='absolute drop-1 bg-gray-100 w-56 z-50'>
                                         <ul>
                                             <li className='hover:translate-x-2 transition-all duration-400 ease-out hover:text-black'>hey</li>
                                             <li className='hover:translate-x-2 transition-all duration-400 hover:text-black'>hey</li>

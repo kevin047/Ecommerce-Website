@@ -7,6 +7,7 @@ import { Zoom } from "@mui/material";
 import { RiTwitterXFill } from "react-icons/ri";
 import { FiMinus } from "react-icons/fi";
 import { IoMdAdd } from "react-icons/io";
+import { useNavigate } from "react-router-dom";
 
 
 const CustomTooltip = styled(({ className, ...props }) => (
@@ -22,6 +23,8 @@ const CustomTooltip = styled(({ className, ...props }) => (
 
 
 function Footer() {
+
+    const navigate = useNavigate();
 
     const [isMediumOrLarger, setIsMediumOrLarger] = useState(window.innerWidth >= 768);
     useEffect(() => {
@@ -51,6 +54,11 @@ function Footer() {
         }
     };
 
+    const handleNavigation = (url)=>{
+        window.scrollTo({top:0, behavior:"smooth"});
+        navigate(url);
+    }
+
     function toggleAccordion(id) {
       const accordion = document.getElementById(id);
 
@@ -72,7 +80,7 @@ function Footer() {
   
     return (
         <>
-            <div className="py-6 bg-gray-200">
+            <div className="py-6 bg-gray-200 mt-24">
                 <div className="w-full flex flex-col items-center px-3">
                     <h2 className="text-3xl font-bold py-2 text-center max-sm:text-2xl">
                         Sign Up to Newsletter
@@ -148,11 +156,11 @@ function Footer() {
                             {!isCompany ? <IoMdAdd size={18}/> : <FiMinus size={18}/>}
                         </h4>}
                         <ul id="footer-company" className={`accordian overflow-hidden ${!isMediumOrLarger ? 'h-0':''}`}>
-                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight ">About Us</li>
-                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight ">Our Stores</li>
-                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight ">Contact Us</li>
+                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight " onClick={()=>{handleNavigation('/aboutus')}}>About Us</li>
+                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight " >Our Stores</li>
+                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight " onClick={()=>{handleNavigation('/contact')}}>Contact Us</li>
                           <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight ">Size Guide</li>
-                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight ">My Account</li>
+                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight " onClick={()=>{handleNavigation('/account')}}>My Account</li>
                         </ul>
                     </div>
                     <div className="md:w-1/6 px-0.5 max-md:my-1">
@@ -203,11 +211,11 @@ function Footer() {
                             {!isLinks ? <IoMdAdd size={18}/> : <FiMinus size={18}/>}
                         </h4>}
                         <ul id="footer-links" className={`accordian overflow-hidden ${!isMediumOrLarger ? 'h-0':''}`}>
-                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight ">About Us</li>
-                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight ">Our Stores</li>
-                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight ">Contact Us</li>
-                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight ">Size Guide</li>
-                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight ">My Account</li>
+                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight " onClick={()=>{handleNavigation('/aboutus')}}>About Us</li>
+                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight " onClick={()=>{handleNavigation('/cart')}}>My Cart</li>
+                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight " onClick={()=>{handleNavigation('/account/wishlist')}}>Wishlist</li>
+                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight " onClick={()=>{handleNavigation('/faq')}}>FAQs</li>
+                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight " onClick={()=>{handleNavigation('/blog')}}>Blog</li>
                         </ul>
                     </div>
                 </div>

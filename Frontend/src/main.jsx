@@ -28,6 +28,10 @@ import MyWishList from './components/Account/scenes/MyWishList.jsx';
 import AddressBook from './components/Account/scenes/AddressBook.jsx';
 import AddressEdit from './components/Account/scenes/AddressEdit.jsx';
 import AccountInfo from './components/Account/scenes/AccountInfo.jsx';
+import ContactUs from './components/ContactUs.jsx';
+import Faqs from './components/Faqs.jsx';
+import AboutUs from './components/AboutUs.jsx';
+import ErrorPage from './components/ErrorPage.jsx';
 
 const router = createBrowserRouter(
   createRoutesFromElements(
@@ -39,6 +43,10 @@ const router = createBrowserRouter(
           <Route path="checkout" element={<Checkout />} />
           <Route path="login" element={<Login />} />
           <Route path="create" element={<Create />} />
+          <Route path="contact" element={<ContactUs />} />
+          <Route path="faq" element={<Faqs />} />
+          <Route path="aboutus" element={<AboutUs />} />
+          <Route path="*" element={<ErrorPage />} />
           <Route path="account" element={<Account />} >
             <Route path="" element={<MyAccount />}/>
             <Route path="orders" element={<MyOrders />}/>
@@ -48,6 +56,7 @@ const router = createBrowserRouter(
             <Route path="address/edit/new" element={<AddressEdit />} />
             <Route path="account/edit" element={<AccountInfo />} />
           </Route>
+          
           {/* <Route path="login" element={<Login />} />
           <Route path="cart" element={<Cart />} />
           <Route path="contact" element={<Contact />} />
