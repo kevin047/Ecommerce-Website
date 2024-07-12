@@ -1,3 +1,4 @@
+/* @import 'bootstrap/dist/css/bootstrap.min.css'; */
 .dropdown-menu{
     max-height: initial;
     overflow: inital;
@@ -15,6 +16,5 @@
     color: aqua;
     pointer-events:initial;
     transition: top .3s;
-
 }
 

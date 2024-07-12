@@ -2,7 +2,7 @@ import React from "react";
 import { useSelector } from "react-redux";
 import { useParams } from "react-router-dom";
 
-function ProductReview() {
+function ProductReview({reviewDetails}) {
     const {id} = useParams();
     // Fetch review from id
     const {review} = useSelector((state)=>state.products)
@@ -36,15 +36,15 @@ function ProductReview() {
                 </div>
                 <div className="w-full">
                     <ul>
-                        {review.map((review)=>{
+                        {reviewDetails?.map((review)=>{
                             return (
                                 <li className="pb-6 mb-6 border-b">
-                                    <div className="pb-2">
-                                        {review.reviewText}
+                                    <div className="pb-2 font-sans font-medium text-sm sm:text-base">
+                                        {review?.reviewComment}
                                     </div>
-                                    <div className="flex justify-between max-sm:flex-col">
-                                        <div>Review by {review.userName}</div>
-                                        <div>Posted on {new Date(review.postedAt).toLocaleDateString()}</div>
+                                    <div className="flex justify-between max-sm:flex-col text-xs sm:text-sm text-gray-600 italic">
+                                        <div>Review by {review?.customerDetails?.customerName}</div>
+                                        <div>Posted on {review?.ratingDate}</div>
                                     </div>
                                 </li>
                             )

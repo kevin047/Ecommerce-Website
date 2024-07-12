@@ -9,7 +9,7 @@ function AddressEdit() {
     console.log(isNew);
   return (
     <>
-        <div className="border p-10 mb-10">
+        <div className="border sm:p-10 max-sm:p-4 mb-10">
             <div className="py-2 font-normal text-base">
                 <div className="font-normal">
                     <label

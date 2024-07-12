@@ -6,6 +6,7 @@ import { IoMdAdd } from "react-icons/io";
 import {
     MdArrowBackIos,
     MdFavoriteBorder,
+    MdKeyboardArrowDown,
     MdKeyboardArrowUp,
     MdKeyboardDoubleArrowRight,
 } from "react-icons/md";
@@ -14,27 +15,83 @@ import { Link } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import { useNavigate } from "react-router-dom";
 import { products } from "../store/products";
-import { setCart } from "../store/store";
+import { setCart, setItem } from "../store/store";
+import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
+import { getCartDetailsApi, updateCartDetailsApi } from "../../libs/apis";
+import { toast } from "react-toastify";
 
 function Cart() {
-
+    const user = useSelector((state)=>state.user.user);
+    const token = useSelector((state)=>state.token);
+    // console.log(user)
     const {cart} = useSelector((state)=>state.shopping);
+    const cartDetails = useSelector((state)=>state.cart);
     const dispatch = useDispatch();
     const navigate = useNavigate();
-    // console.log(cart)
+    console.log(cartDetails)
 
-    function handleCart(action,product){
-        dispatch(
-            setCart(
-                {
-                    action:action,
-                    product:{
-                        productId: product.productId,
-                        quantity: 1,
-                    }
-                }
-            )
-        )
+    const getCartDetails = async ()=>{
+        if(user){
+            let formData = new FormData();
+            const userId = user?.id;
+            formData.append("customerId",userId);
+            const cartDetails = await getCartDetailsApi(formData,token);
+            if(cartDetails?.status){
+                // console.log(cartDetails.cartList)
+                dispatch(
+                    setCart(
+                        {
+                            cart:cartDetails?.cartList,
+                        }
+                    )
+                )
+            }
+        }
+    }
+
+    useEffect(()=>{
+        getCartDetails();
+    },[])
+
+    async function handleCart(action,product){
+        if(action==='INC'){
+            let qty = Number.parseInt(product?.qty);
+            qty++;
+            
+            let formData = new FormData();
+            formData.append("id", product?.id);
+            formData.append("clientId", import.meta.env.VITE_Client_Id);
+            formData.append("qty", qty);
+            formData.append("created_by", import.meta.env.VITE_Client_Id);
+            const newCartDetails = await updateCartDetailsApi(formData);
+            if(newCartDetails?.status){
+                getCartDetails();
+                toast.success('Cart Updated!');
+            }
+            else{
+                toast.error(newCartDetails?.message);
+            }
+        }
+        else if(action==='DEC'){
+            let qty = Number.parseInt(product?.qty);
+            qty--;
+            if(qty==0){
+                return;
+            }
+            let formData = new FormData();
+            formData.append("id", product?.id);
+            formData.append("clientId", import.meta.env.VITE_Client_Id);
+            formData.append("qty", qty);
+            formData.append("created_by", import.meta.env.VITE_Client_Id);
+            const newCartDetails = await updateCartDetailsApi(formData);
+            if(newCartDetails?.status){
+                getCartDetails();
+                toast.success('Cart Updated!');
+            }
+            else{
+                toast.error(newCartDetails?.message);
+            }
+        }
     }
 
     const [isMediumOrLarger, setIsMediumOrLarger] = useState(
@@ -50,6 +107,10 @@ function Cart() {
         return () => window.removeEventListener("resize", handleResize);
     }, []);
 
+
+    const handleCheckout = ()=>{
+        navigate('/checkout');
+    }
     
 
     return (
@@ -71,45 +132,45 @@ function Cart() {
                                         <th className="border-r p-2">Subtotal</th>
                                     </tr>
                                     
-                                    {cart.items.map((product)=>{
+                                    {cartDetails?.map((product)=>{
                                         return (
-                                            <tr>
+                                            <tr className="border">
                                                 <td className="p-6 border-r w-2/5">
                                                     <div className="flex">
                                                         <div className="w-[100px] mr-3">
                                                             <img
                                                                 className="border rounded-lg w-full"
-                                                                src={`${product.image}`}
+                                                                src={`${product?.variantDetails?.variantImage}`}
                                                                 alt=""
                                                             />
                                                         </div>
                                                         <div className="flex flex-col justify-between w-full">
                                                             <p className="text-md font-bold tracking-wide text-wrap">
-                                                                {product.name}
+                                                                {product?.productDetails?.productName}
                                                             </p>
                                                             <div className="flex">
-                                                                <button className="mr-2" onClick={()=>navigate(`/products/${product.productId}`)}><CiEdit  /></button>
-                                                                <button><RiDeleteBin6Line onClick={()=>handleCart('DEL',product)}/></button>
+                                                                <button className="mr-2" onClick={()=>navigate(`/products/${product?.productDetails?.id}`)}><CiEdit  /></button>
+                                                                <button><RiDeleteBin6Line onClick={()=>handleCart('DELxxx',product)}/></button>
                                                             </div>
                                                         </div>
                                                     </div>
                                                 </td>
                                                 <td className="p-6 border-r w-1/5">
-                                                    ${product.unitPrice}
+                                                    ${product?.variantDetails?.price}
                                                 </td>
                                                 <td className="p-6 border-r w-1/5">
                                                     <div className="flex w-fit p-3 bg-gray-200 rounded-full mr-3 justify-between">
                                                         <button className="" onClick={()=>handleCart('DEC',product)}>
                                                             <FiMinus />
                                                         </button>
-                                                        <span className="mx-6">{product.quantity}</span>
+                                                        <span className="mx-6">{product?.qty}</span>
                                                         <button  onClick={()=>handleCart('INC',product)}>
                                                             <IoMdAdd />
                                                         </button>
                                                     </div>
                                                 </td>
                                                 <td className="p-6 border-r w-1/5">
-                                                    ${product.subtotal}
+                                                    ${product?.variantDetails?.price * product?.qty}
                                                 </td>
                                             </tr>
                                         )
@@ -123,7 +184,7 @@ function Cart() {
                                 <ul>
                                     {cart.items.map((product)=>{
                                         return (
-                                            <li>
+                                            <li className="mb-6">
                                                 <div className="flex py-4 border-b">
                                                     <div className="w-[100px] mr-3">
                                                         <img
@@ -188,22 +249,22 @@ function Cart() {
                         )}
 
                         <div className="flex flex-row max-md:flex-col justify-between my-10">
-                            <button className="border flex items-center justify-center my-1 py-3 px-7 rounded-3xl hover:bg-blue-400 hover:text-white transition duration-500">
+                            <button className="border flex items-center justify-center my-1 py-3 px-7 rounded-3xl hover:bg-blue-400 hover:text-white transition duration-500" onClick={()=>navigate('/shop')}>
                                 <MdArrowBackIos />
                                 <span className="text-sm font-bold tracking-wide text-nowrap">Continue Shopping</span>
                             </button>
-                            <Link
-                                to="/checkout"
-                                className="border flex items-center justify-center my-1 py-3 px-7 rounded-3xl hover:bg-blue-400 hover:text-white transition duration-500"
-                            >
-                                <span className="text-sm font-bold tracking-wide text-nowrap">Clear Shopping Cart</span>
-                            </Link>
                             <button
+                                to="/checkout"
                                 className="border flex items-center justify-center my-1 py-3 px-7 rounded-3xl hover:bg-blue-400 hover:text-white transition duration-500"
                                 onClick={() => emptyCart()}
                             >
+                                <span className="text-sm font-bold tracking-wide text-nowrap">Clear Shopping Cart</span>
+                            </button>
+                            <button
+                                className="border flex items-center justify-center my-1 py-3 px-7 rounded-3xl hover:bg-blue-400 hover:text-white transition duration-500"                                
+                            >
                                 <RxUpdate className="mr-2 rotate-90"/>
-                                <span className="text-sm font-bold tracking-wide text-nowrap">Update Shopping Cart</span>
+                                <span className="text-sm font-bold tracking-wide text-nowrap" onClick={async ()=>{await getCartDetails(); toast.success('Cart Refreshed')}}>Update Shopping Cart</span>
                             </button>
                         </div>
                     </div>
@@ -214,7 +275,72 @@ function Cart() {
                                 Summary
                             </div>
 
-                            <div className="border-b border-gray-300 py-3">
+                            <Accordion defaultExpanded={true} className=" transition-none" style={{ all:'unset' }}>
+                                <AccordionSummary
+                                className=" font-semibold cursor-pointer"
+                                expandIcon={<MdKeyboardArrowDown size={20} className="cursor-pointer"/>}
+                                style={{ padding:'unset'}}
+                                >
+                                    Estimate Shipping and Tax
+                                </AccordionSummary>
+                                <AccordionDetails className="text-pretty" style={{padding:'unset'}}>
+                                    <div className="py-1 font-normal text-sm opacity-75">
+                                        <div className="font-normal text-xs tracking-wide py-3">
+                                            Enter your destination to get a shipping
+                                            estimate.
+                                        </div>
+                                        <div className="font-normal">
+                                            <label
+                                                className="mb-2"
+                                                htmlFor="grid-first-name"
+                                            >
+                                                Country
+                                            </label>
+                                            <select className="rounded-full appearance-none block w-full text-gray-700 border border-gray-200 py-3 px-5 mb-3 mt-2 focus:bg-white">
+                                                <option value="">India</option>
+                                                <option value="">America</option>
+                                            </select>
+                                            <label
+                                                className="mb-2"
+                                                htmlFor="grid-first-name"
+                                            >
+                                                State/Province
+                                            </label>
+                                            <select className="rounded-full appearance-none block w-full text-gray-700 border border-gray-200 py-3 px-5 mb-3 mt-2 focus:bg-white">
+                                                <option value="">Gujarat</option>
+                                                <option value="">
+                                                    Madhya Pradesh
+                                                </option>
+                                            </select>
+                                            <label
+                                                className="mb-2"
+                                                htmlFor="grid-first-name"
+                                            >
+                                                State/Province
+                                            </label>
+                                            <input className="rounded-full appearance-none block w-full text-gray-700 border border-gray-200 py-3 px-5 mb-3 mt-2 focus:bg-white" />
+                                            <label
+                                                className="pt-4 mb-2 block font-semibold"
+                                                htmlFor="grid-first-name"
+                                            >
+                                                Free Shipping
+                                            </label>
+                                            <input type="radio" />{" "}
+                                            <label htmlFor="">Free $0.00</label>
+                                            <label
+                                                className="pt-4 mb-2 block font-semibold"
+                                                htmlFor="grid-first-name"
+                                            >
+                                                Flat Rate
+                                            </label>
+                                            <input type="radio" />{" "}
+                                            <label htmlFor="">Fixed $5.00</label>
+                                        </div>
+                                    </div>
+                                </AccordionDetails>
+                            </Accordion>
+
+                            {/* <div className="border-b border-gray-300 py-3">
                                 <div className="flex justify-between py-2 text-base items-center">
                                     <div>Estimate Shipping and Tax</div>
                                     <MdKeyboardArrowUp size={20} />
@@ -272,7 +398,7 @@ function Cart() {
                                         <label htmlFor="">Fixed $5.00</label>
                                     </div>
                                 </div>
-                            </div>
+                            </div> */}
 
                             <div className="py-6 text-sm text-gray-700">
                                 <table className="bg-white border w-full">
@@ -297,47 +423,55 @@ function Cart() {
                                     </tbody>
                                 </table>
                             </div>
+                            
 
-                            <div className="border-b border-gray-300 py-3">
-                                <div className="flex justify-between py-2 text-base items-center">
-                                    <div>Apply Discount Code</div>
-                                    <MdKeyboardArrowUp size={20} />
-                                </div>
-                                <div className="py-6 font-normal text-sm">
-                                    <div className="font-normal">
-                                        <label
-                                            className="mb-2"
-                                            htmlFor="grid-first-name"
-                                        >
-                                            Enter Discount Code
-                                        </label>
-                                        <input
-                                            className="rounded-full appearance-none block w-full text-gray-700 border border-gray-200 py-3 px-5 mb-3 mt-2 focus:bg-white"
-                                            placeholder="Enter Coupon Code"
-                                        />
-                                        <button className="px-6 py-4 rounded-full bg-white text-black hover:bg-blue-400 hover:text-white font-bold transition duration-300 ease-in border border-gray-400">
-                                            Apply Discount
-                                        </button>
-                                        <button className=" tracking-wide block py-3 my-4 bg-black text-white w-full rounded-full font-bold">
-                                            Proceed To Checkout
-                                        </button>
-                                        <div className="my-3 flex flex-wrap">
+                            <Accordion defaultExpanded={true} className=" transition-none" style={{ all:'unset' }}>
+                                <AccordionSummary
+                                className=" font-semibold cursor-pointer"
+                                expandIcon={<MdKeyboardArrowDown size={20} className="cursor-pointer"/>}
+                                style={{ padding:'unset'}}
+                                >
+                                    Apply Discount Code
+                                </AccordionSummary>
+                                <AccordionDetails className="text-pretty" style={{padding:'unset'}}>
+                                    <div className="py-6 font-normal text-sm">
+                                        <div className="font-normal">
+                                            <label
+                                                className="mb-2"
+                                                htmlFor="grid-first-name"
+                                            >
+                                                Enter Discount Code
+                                            </label>
                                             <input
-                                                className="pr-1 py-1 lg:w-1/2"
-                                                type="image"
-                                                src="https://www.paypalobjects.com/webstatic/en_US/i/buttons/checkout-logo-medium.png"
-                                                alt="Checkout with PayPal"
-                                                title="Checkout with PayPal"
+                                                className="rounded-full appearance-none block w-full text-gray-700 border border-gray-200 py-3 px-5 mb-3 mt-2 focus:bg-white"
+                                                placeholder="Enter Coupon Code"
                                             />
-                                            <input
-                                                className="pl-1 py-1 lg:w-1/2"
-                                                type="image"
-                                                src="https://www.paypalobjects.com/webstatic/en_US/i/buttons/ppcredit-logo-medium.png"
-                                                alt="Checkout with PayPal"
-                                                title="Checkout with PayPal"
-                                            />
+                                            <button className="px-6 py-4 rounded-full bg-white text-black hover:bg-blue-400 hover:text-white font-bold transition duration-300 ease-in border border-gray-400">
+                                                Apply Discount
+                                            </button>
                                         </div>
                                     </div>
+                                </AccordionDetails>
+                            </Accordion>
+                            <div className="border-b border-gray-300 text-sm">
+                                <button className=" tracking-wide block py-3 my-4 bg-black text-white w-full rounded-full font-bold" onClick={()=>handleCheckout()}>
+                                    Proceed To Checkout
+                                </button>
+                                <div className="my-3 flex flex-wrap">
+                                    <input
+                                        className="pr-1 py-1 lg:w-1/2"
+                                        type="image"
+                                        src="https://www.paypalobjects.com/webstatic/en_US/i/buttons/checkout-logo-medium.png"
+                                        alt="Checkout with PayPal"
+                                        title="Checkout with PayPal"
+                                    />
+                                    <input
+                                        className="pl-1 py-1 lg:w-1/2"
+                                        type="image"
+                                        src="https://www.paypalobjects.com/webstatic/en_US/i/buttons/ppcredit-logo-medium.png"
+                                        alt="Checkout with PayPal"
+                                        title="Checkout with PayPal"
+                                    />
                                 </div>
                             </div>
                         </div>

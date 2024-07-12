@@ -1,11 +1,51 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import MyAccount from './scenes/MyAccount'
 import MyOrders from './scenes/MyOrders';
-import { Link, Outlet, Route, Routes } from 'react-router-dom';
+import { Link, Outlet, Route, Routes, useNavigate } from 'react-router-dom';
+import { useDispatch, useSelector } from 'react-redux';
+import { toast } from 'react-toastify';
+import { setUser } from '../../store/store';
 
 
 function Account() {
+    const token = useSelector((state)=>state?.token)
+    const navigate = useNavigate();
 
+    const SignInToast = ({ onNavigate }) => (
+        <div>
+          <button onClick={onNavigate} className='font-bold underline'>
+            Sign In
+          </button>
+           &nbsp; First
+        </div>
+      );
+    useEffect(()=>{
+        if(!token){
+            navigate('/');
+            const handleNavigate = () => {
+                navigate('/login');
+                toast.dismiss('accountError');
+            };
+            toast.error(<SignInToast onNavigate={handleNavigate} />, {
+                toastId: "accountError",
+              });
+        }
+    },[token])
+
+    const dispatch = useDispatch();
+    
+    const handleSignOut = ()=>{
+        dispatch(
+            setUser(
+                {
+                    user:null,
+                    token:'',
+                }
+            )
+        )
+        toast.warn('Sign Out')
+        navigate('/');
+    }
   return (
     <>
         <div className=" h-32 max-sm:h-24  flex flex-col justify-center items-center ">
@@ -23,7 +63,7 @@ function Account() {
                             <li className='my-1 text-gray-500' ><Link to='./wishlist'>My WishList</Link></li>
                             <li className='my-1 text-gray-500'><Link to='./address'>Address Book</Link></li>
                             <li className='my-1 text-gray-500'><Link to='./account/edit'>Account Information</Link></li>
-                            <li className='my-1 text-gray-500'>My Account</li>
+                            <li className='my-1 text-gray-500' onClick={()=>handleSignOut()}>Sign Out</li>
                         </ul>
                     </div>
                 </div>

@@ -17,7 +17,7 @@ function MyWishList() {
                 return (
                     <>
                     
-                    <div className="flex flex-col items-center place-items-center my-2 mx-auto  w-[340px] px-1">
+                    <div className="flex flex-col items-center place-items-center my-2 mx-auto  sm:w-[340px] max-sm:w-auto px-1">
                         <div className='h-auto w-auto relative group overflow-hidden cursor-pointer' onClick={()=>navigate(`/products/${product.productId}`)}>
                             <img className='pointer-events-none' src={`${product.images.main}`} alt=""/>
                             {/* <div className="absolute h-full flex flex-col top-0 right-0 opacity-0  group-hover:-translate-x-1 group-hover:opacity-100 transition-all duration-500 ease-in-out">

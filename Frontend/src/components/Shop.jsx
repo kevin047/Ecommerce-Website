@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { IoMdClose } from "react-icons/io";
 import { FaMinus } from "react-icons/fa6";
 import RangeSlider from "svelte-range-slider-pips";
@@ -13,55 +13,162 @@ import {
     MdKeyboardDoubleArrowRight,
 } from "react-icons/md";
 import { useDispatch, useSelector } from "react-redux";
-import { useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams, useRouteError } from "react-router-dom";
 import { setCart } from "../store/store";
 import Modal from "./Modal";
+import { getMainCategoryListApi, getProductsbyFilterApi } from "../../libs/apis";
+import { RiStarFill, RiStarHalfFill, RiStarLine } from "react-icons/ri";
+import Slider from '@mui/material/Slider';
+import InputRange from 'react-input-range';
+import "react-input-range/lib/css/index.css";
 
 
 function Shop() {
     const {details} = useSelector((state)=>state.products);
     const navigate  = useNavigate();
-    // console.log(details)
-    const [values, setValues] = useState([33, 66]);
-    const MySlider = useRef();
-    const $node = useRef();
+    const location = useLocation();
+    const query = location.search;
+    const [filterFormData,setFilterFormData] = useState(new FormData());
     const dispatch = useDispatch();
 
+    const [productList,setProductList] = useState([]);
+    
     let products = [...details];
-    console.log(products)
+    // console.log(products)
 
-    useEffect(() => {
-        if (!MySlider.current) {
-            MySlider.current = new RangeSlider({
-                target: $node.current,
-                props: {
-                    values: values,
-                    range: true,
-                    min: 55,
-                    max: 4747,
-                    pips: {
-                        mode: "values",
-                        values: [55, 1000, 2000, 3000, 4000, 4747],
-                        density: 10,
-                        stepped: true,
-                        format: {
-                            to: (value) => `${value}`,
-                        },
-                    },
-                },
-            });
-            MySlider.current.$on("change", (e) => {
-                console.log(e.detail.values);
-                setValues(e.detail.values);
-            });
+    const findProductByFilter = async ()=>{
+        try{
+            // Form Data for filter queries
+            let formData = new FormData();
+            const newquery = new URLSearchParams(query);
+            // Check Price
+            const minPrice = newquery.get('minprice') || null;
+            const maxPrice = newquery.get('maxprice') || null;
+            if(minPrice && maxPrice){
+                setPriceRange(()=>{return {value:{min:minPrice, max:maxPrice}}})
+                formData.append('minPrice',minPrice);
+                formData.append('maxPrice',maxPrice);
+                // console.log(Array(formData.entries()),'hey')
+            }
+            // Check Category
+            const categoryId = newquery.get('maincategory') || null;
+            if(categoryId){
+                formData.append('mainCategoryId',categoryId);
+                const category = newquery.get('category') || null;
+                if(category){
+                    formData.append('categoryId',category);
+                    const subCategory = newquery.get('subcategory') || null;
+                    if(subCategory){
+                        formData.append('subCategoryId',subCategory);
+                    }
+                }
+                setCurrCategory(()=>categoryId);
+                
+            }
+            // Check Rating
+            const minRating = newquery.get('minrating') || null;
+            if(minRating){
+                formData.append('minRating',minRating);
+            }
+            setFilterFormData(()=>formData);
+            
+            // for (let pair of filterFormData.entries()) {
+            //     formData.append(pair[0], pair[1]);
+            //   }
+            const callApi = await getProductsbyFilterApi(formData);
+            if(callApi?.status){
+                setProductList(()=>callApi?.productList);
+                // console.log(productList,'hello')
+            }
         }
-    }, []);
-
-    function handleClick() {
-        const newVal = 11;
-        setValues([newVal]);
-        MySlider.current.$set({ values: [newVal], range: false });
+        catch(e){
+            console.log(e);
+        }
     }
+
+    useEffect(()=>{
+        findProductByFilter();
+    },[query])
+    
+
+    const applyFilter = ()=>{
+        //Handle Price Change
+        const newquery = new URLSearchParams();
+        const minPrice = priceRange.value.min;
+        const maxPrice = priceRange.value.max;
+        if(maxPrice){
+            newquery.set('minprice',minPrice);
+            newquery.set('maxprice',maxPrice);
+            // formData.append('minprice',minPrice);
+            // formData.append('maxprice',maxPrice);
+            // console.log(Array(formData.entries()),'hey')
+        }
+        const mainCategoryId = currCategory;
+        if(mainCategoryId){
+            newquery.set('maincategory',mainCategoryId);
+            // formData.append('mainCategoryId',mainCategoryId);
+            // const category = newquery.get('category') || null;
+            // if(category){
+            //     formData.append('categoryId',category);
+            //     const subCategory = newquery.get('subcategory') || null;
+            //     if(subCategory){
+            //         formData.append('subCategoryId',subCategory);
+            //     }
+            // }
+            
+        }
+        const minRatingSet = ratingFilter.minRating;
+        console.log(ratingFilter)
+        const maxRating = ratingFilter.maxRating;
+        if(minRatingSet.length!=0 && maxRating){
+            let minRating = 6;
+            minRatingSet.forEach((rating)=>{
+                console.log(minRating,'hey')
+                if(minRating>=rating){
+                    minRating=rating;
+                }
+            })
+            
+            if(minRating!=6){
+                newquery.append('minrating',minRating);
+            }
+        }
+        // console.log(newquery.toString())
+        navigate(`${location.pathname}?${newquery.toString()}`);
+    }
+
+    // useEffect(() => {
+    //     if (!MySlider.current) {
+    //         MySlider.current = new RangeSlider({
+    //             target: $node.current,
+    //             props: {
+    //                 values: values,
+    //                 range: true,
+    //                 min: 55,
+    //                 max: 4747,
+    //                 pips: {
+    //                     mode: "values",
+    //                     values: [55, 1000, 2000, 3000, 4000, 4747],
+    //                     density: 10,
+    //                     stepped: true,
+    //                     format: {
+    //                         to: (value) => `${value}`,
+    //                     },
+    //                 },
+    //             },
+    //         });
+    //         MySlider.current.$on("change", (e) => {
+    //             console.log(e.detail.values);
+    //             setValues(e.detail.values);
+    //         });
+    //     }
+    // }, []);
+
+    // function handleClick() {
+    //     const newVal = 11;
+    //     setValues([newVal]);
+    //     MySlider.current.$set({ values: [newVal], range: false });
+    // }
 
     const handleCart = (event,product)=>{
         event.stopPropagation();
@@ -95,12 +202,66 @@ function Shop() {
         setIsModalOpen(false);
     }
 
-    const [perPage,setPerPage] = useState(5);
+    const [perPage,setPerPage] = useState(10);
     const [currentPage,setCurrentPage] = useState(1);
 
     const handlePerPage = (event)=>{
         setPerPage(()=>event.target.value<=0 ? 5 : event.target.value)
     }
+
+    
+    function valuetext(value) {
+        return `${value}`;
+      }
+      
+    const minDistance = 10;
+    const [priceRange, setPriceRange] = useState({value:{min:0, max:1000}});
+
+    // Filter Category
+    const [currCategory, setCurrCategory] = useState(null);
+    const [mainCategoryList_uncached, setMainCategoryList] = useState([]);
+    const getmainCategoryList = useCallback(async ()=>{
+        try{
+            const categoryList = await getMainCategoryListApi();
+            if(categoryList?.status){
+                setMainCategoryList(categoryList?.mainCategoryDetails);
+            }
+        }
+        catch(e){
+            console.log(e);
+        }
+    },[])
+
+    useEffect(()=>{
+        getmainCategoryList();
+    },[getmainCategoryList])
+
+    const mainCategoryList = useMemo(()=>mainCategoryList_uncached, [mainCategoryList_uncached]);
+
+    //Filter Ratings
+    const [ratingFilter, setRatingFilter] = useState({minRating:new Set(), maxRating:5});
+
+    const handleFilter = (action, value) => {
+        if(action==='priceChange'){
+            const minPrice = value.min;
+            const maxPrice = value.max;
+            const searchParams = new URLSearchParams(location.search);
+            searchParams.set('minprice',minPrice);
+            searchParams.set('maxprice',maxPrice);
+            // console.log(searchParams)
+            navigate(`${location.pathname}?${searchParams.toString()}`);
+        }
+        else if(action==='categoryChange'){
+            const id = value;
+            const searchParams = new URLSearchParams(location.search);
+            searchParams.set('maincategory',id);
+            navigate(`${location.pathname}?${searchParams.toString()}`);
+            setCurrCategory(()=>id);
+        }
+    };
+
+    
+
 
     return (
         <>
@@ -183,20 +344,16 @@ function Shop() {
                                 <FaMinus />
                             </div>
                         </div>
-                        <ul className="text-sm font-semibold py-2">
-                            <li className="py-2">
-                                Macbook/PCs{" "}
-                                <span className="text-gray-500">(47)</span>
-                            </li>
-                            <li className="py-2">
-                                Macbook/PCs{" "}
-                                <span className="text-gray-500">(47)</span>
-                            </li>
-                            <li className="py-2">
-                                Macbook/PCs{" "}
-                                <span className="text-gray-500">(47)</span>
-                            </li>
-                        </ul>
+                        {mainCategoryList.length!==0 ? <ul className="text-sm font-semibold py-2">
+                            {mainCategoryList?.map((category)=>{
+                                return (
+                                    <li className={`py-2  ${category.id==currCategory ? 'text-blue-900 drop-shadow':'hover:text-blue-400'}`} onClick={()=>{setCurrCategory(()=>category.id); }}>
+                                        {category.mainCategoryName}
+                                        {/* <span className="text-gray-500">(47)</span> */}
+                                    </li>
+                                )
+                            })}
+                        </ul> :''}
                     </div>
 
                     <div className="category py-6 border-b">
@@ -208,8 +365,25 @@ function Shop() {
                         </div>
                         <div
                             className="text-black text-xs py-4"
-                            ref={$node}
-                        ></div>
+                        >
+                            {/* <Slider
+                            getAriaLabel={() => 'Minimum distance'}
+                            value={priceRange}
+                            onChange={handlePriceChange}
+                            valueLabelDisplay="auto"
+                            getAriaValueText={valuetext}
+                            disableSwap
+                            
+                            /> */}
+                            <InputRange
+                                maxValue={1000}
+                                minValue={0}
+                                value={priceRange.value}
+                                step={100}
+                                onChange={value => {setPriceRange(()=>{return { value }});}}
+                            />
+                        </div>
+                            <button className="border p-1 text-xs my-2" onClick={()=>applyFilter()}>Apply change</button>
                     </div>
 
                     <div className="category py-6 border-b">
@@ -220,12 +394,40 @@ function Shop() {
                             </div>
                         </div>
                         <div className="pt-4">
-                            <input type="checkbox" name="" id="" />
-                            <label htmlFor="" className="px-1">
-                                {" "}
-                                *****{" "}
-                            </label>
-                            <span className="text-gray-500">(47)</span>
+                            {[5,4,3,2,1].map((rating)=>{
+                                let fill = []
+                                let noFill = []
+                                for(let i=0;i<rating;i++){
+                                    fill.push(<RiStarFill className="inline" />)
+                                }
+                                for(let i=0;i<5-rating;i++){
+                                    noFill.push(<RiStarLine className="inline" />)
+                                }
+                                return (
+                                    <div className="flex my-1">
+                                        <input type="checkbox" name="" id="" onClick={(event)=>{
+                                            if(event.target.checked){
+                                                console.log('hey')
+                                                setRatingFilter((old)=>{
+                                                    const newSet = {...old};
+                                                    newSet.minRating.add(rating);
+                                                    return newSet;
+                                                })
+                                            }
+                                            else{
+                                                setRatingFilter((old)=>{
+                                                    const newSet = {...old};
+                                                    newSet.minRating.delete(rating);
+                                                    return newSet;
+                                                })
+                                            }
+                                        }}/>
+                                        <label htmlFor="" className="px-1 flex items-center">
+                                            {fill}{noFill} {rating}
+                                        </label>
+                                    </div>
+                                )
+                            })}
                         </div>
                     </div>
 
@@ -384,9 +586,11 @@ function Shop() {
                             </div>
 
                             <div className="pt-2">
-                                <a href="" className="font-semibold text-sm">
+                                <Link to='/account/wishlist' onClick={()=>{
+                                    window.scrollTo({top:'0', behavior:'smooth'})
+                                }} className="font-semibold text-sm">
                                     Go to Wish List
-                                </a>
+                                </Link>
                             </div>
                         </div>
                     </div>
@@ -398,7 +602,7 @@ function Shop() {
 
                 <div className="shop-card w-full lg:pl-10">
                     <div className="flex justify-between flex-wrap w-auto mb-5">
-                        <div className="max-sm:hidden">{products.length} Items</div>
+                        <div className="max-sm:hidden">{productList?.length} Items</div>
                         <div className="max-sm:flex-1 max-sm:justify-between">
                             <span className="max-md:hidden">Sort by:</span>
                             <select
@@ -420,21 +624,26 @@ function Shop() {
 
                     {/* Product Cards Display */}
                     <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 my-10">
-                        {isModalOpen && <Modal isOpen={isModalOpen} onClose={closeModal} product={productModal}/>}
-                        {products.slice(currentPage*perPage - perPage, currentPage*perPage).map((product,index)=>{
+                        {isModalOpen && <Modal isOpen={isModalOpen} onClose={closeModal} productDetails={productModal}/>}
+                        {productList?.slice(currentPage*perPage - perPage, currentPage*perPage)?.map((product,index)=>{
+                            const avgRating = product?.averageRatingsDetails?.[0]?.averageRating;
+                            const ratings = [1,2,3,4,5];
+                            const fill = Math.floor(avgRating);
+                            const Hfill = Math.ceil(avgRating)-fill;
+                            const Nofill = 5-fill-Hfill;
                             return (
                                 <div className="flex flex-col items-center mx-auto max-w-[258px] w-full px-1 py-4">
-                                    <div className="h-auto w-auto relative group overflow-hidden cursor-pointer" onClick={()=>navigate(`/products/${product.productId}`)}>
+                                    <div className="h-auto w-auto relative group overflow-hidden cursor-pointer" onClick={()=>navigate(`/products/${product.id}`)}>
                                         <img
                                             className="pointer-events-none"
-                                            src={`${product.images.main}`}
+                                            src={`${JSON?.parse(product?.productGallery || "[]")?.[0]}`}
                                             alt=""
                                         />
                                         <div className="absolute h-full flex flex-col top-0 right-0 md:opacity-0  group-hover:-translate-x-1 group-hover:opacity-100 transition-all duration-500 ease-in-out">
                                             <button
                                                 className="mb-1 mt-6 p-2 bg-white rounded-full shadow-lg transition duration-500 hover:bg-black hover:text-white"
                                                 title="Add to Cart"
-                                                onClick={(event)=>{handleCart(event,product)}}
+                                                onClick={(event)=>{}}
                                             >
                                                 <FiShoppingBag />
                                             </button>
@@ -461,23 +670,37 @@ function Shop() {
                                             </button>
                                         </div>
                                         <div className="absolute top-1 left-1">
-                                            <span className="rounded-full bg-blue-400 text-white font-semibold  px-2 py-0.5 text-sm">
-                                                -{product.discountPercentage}%
-                                            </span>
+                                        {product?.discountedPercentage && <span className="rounded-full bg-blue-400 text-white font-semibold  px-2 py-0.5 text-sm">
+                                                -{product?.discountedPercentage}%
+                                            </span>}
                                         </div>
                                     </div>
-                                    <div className="flex flex-col justify-between flex-1">
+                                    <div className="flex flex-col justify-between flex-1 w-full mt-2">
                                         <div className="text-gray-400 text-xs tracking-wide font-semibold">
-                                            {product.brand} {currentPage*perPage - perPage+index+1}
+                                            {product?.sku} {currentPage*perPage - perPage+index+1}
                                         </div>
-                                        <div className="text-sm tracking-wide cursor-pointer" onClick={()=>navigate(`/products/${product.productId}`)}>
-                                            {product.name}
+                                        <div className="text-sm tracking-wide cursor-pointer" onClick={()=>navigate(`/products/${product?.id}`)}>
+                                            {product?.productName}
                                         </div>
-                                        <div>*****</div>
+                                        <div className="flex py-1 items-center">
+                                            {!avgRating && <span>No Ratings Yet</span>}
+                                        {avgRating && ratings?.map((_,index)=>{
+                                            if(index<fill){
+                                                return (<RiStarFill />)
+                                            }
+                                            else if(index<fill+Hfill){
+                                                return (<RiStarHalfFill />)
+                                            }
+                                            else{
+                                                return (<RiStarLine />)
+                                            }
+                                        })}
+                                        {avgRating && <span className='ml-1'>{Number.parseFloat(product?.averageRatingsDetails?.[0]?.averageRating)?.toFixed(1)}</span>}
+                                        </div>
                                         <div className="text-lg flex flex-wrap items-baseline">
-                                            <div>${product.discountedPrice}</div>
+                                            <div>${product?.minSalePrice}</div>
                                             <div className="text-sm text-gray-500 font-semibold line-through px-2">
-                                                ${product.price}
+                                                ${product?.saleStartsAt}
                                             </div>
                                         </div>
                                     </div>
@@ -555,8 +778,8 @@ function Shop() {
                                     if(currentPage==1) adder+=0;
                                     else adder+=-1;
                                     let pageNumber = currentPage+adder;
-                                    if(pageNumber*perPage - perPage<products.length){
-                                        console.log(currentPage+adder, products.length)
+                                    if(pageNumber*perPage - perPage<productList.length){
+                                        // console.log(currentPage+adder, productList.length)
                                         return (
                                             <span 
                                                 className={`mx-1 bg-white border rounded-full w-10 h-10 flex items-center justify-center cursor-pointer ${pageNumber==currentPage ? 'shadow-inner shadow-blue-200' : ''}`} 
@@ -571,7 +794,7 @@ function Shop() {
                             }
 
                             <span 
-                                className={`bg-white border rounded-full w-10 h-10 flex items-center justify-center cursor-pointer ${(currentPage+1)*perPage - perPage>=products.length ? 'hidden' : ''}`}
+                                className={`bg-white border rounded-full w-10 h-10 flex items-center justify-center cursor-pointer ${(currentPage+1)*perPage - perPage>=productList.length ? 'hidden' : ''}`}
                                 onClick={()=>setCurrentPage((currPage)=>currPage+1)}
                             >
                                 <MdKeyboardDoubleArrowRight/>

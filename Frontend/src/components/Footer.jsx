@@ -105,7 +105,7 @@ function Footer() {
                     </div>
                 </div>
 
-                <div className="flex max-md:flex-col my-3 py-3 lg:mx-10 mx-5">
+                <div className="flex max-md:flex-col my-3 py-3 lg:mx-10 mx-3">
                     <div className="md:w-2/6 px-0.5">
                         <h4 className="text-lg font-semibold mb-4">
                             Contact Us
@@ -174,12 +174,10 @@ function Footer() {
                             {!isService ? <IoMdAdd size={18}/> : <FiMinus size={18}/>}
                         </h4>}
                         <ul id="footer-service" className={`accordian overflow-hidden ${!isMediumOrLarger ? 'h-0':''}`}>
-                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight ">Privacy Policy</li>
-                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight ">Refund Policy</li>
-                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight ">Shipping & Return</li>
-                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight ">Terms & Conditions</li>
-                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight ">Advanced Search</li>
-                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight ">Store Location</li>
+                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight " onClick={()=>{handleNavigation('/privacy-policy')}}>Privacy Policy</li>
+                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight " onClick={()=>{handleNavigation('/privacy-policy')}}>Refund Policy</li>
+                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight " onClick={()=>{handleNavigation('/privacy-policy')}}>Shipping & Return</li>
+                          <li className="py-1 text-gray-600 hover:text-black hover:translate-x-1 transition duration-300 ease-in-out tracking-tight " onClick={()=>{handleNavigation('/term-condition')}}>Terms & Conditions</li>
                         </ul>
                     </div>
                     <div className="md:w-1/6 px-0.5 max-md:my-1">

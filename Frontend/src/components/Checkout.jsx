@@ -13,14 +13,90 @@ import {
     MdKeyboardDoubleArrowRight,
 } from "react-icons/md";
 import { RxUpdate } from "react-icons/rx";
+import { useNavigate } from "react-router-dom";
+import { Accordion, AccordionDetails, AccordionSummary } from "@mui/material";
+import { useDispatch, useSelector } from "react-redux";
+import { setCart } from "../store/store";
+import { getAllAddressApi, getCartDetailsApi, getShippingChargeApi } from "../../libs/apis";
 
 function Checkout() {
+    const navigate = useNavigate();
     const [isShip, setIsShip] = useState(false);
     const [isDiscount, setIsDiscount] = useState(false);
     const [selected, setSelected] = useState(-1);
     const [addressChange, setAddressChange] = useState(false);
+    const [addressList, setAddressList] = useState([]);
+    const [selectedAddress, setSelectedAddress] = useState();
     const [newAddress, setNewAddress] = useState('default');
     const [saveNewAddress, setsaveNewAddress] = useState(false);
+
+    const user = useSelector((state)=>state.user.user);
+    const token = useSelector((state)=>state.token);
+    // console.log(user)
+    const {cart} = useSelector((state)=>state.shopping);
+    const cartDetails = useSelector((state)=>state.cart);
+    const dispatch = useDispatch();
+
+    const [shippingCharge,setShippingCharge] = useState();
+    const [subTotal,setSubTotal] = useState();
+    const [orderTotal, setOrderTotal] = useState();
+
+    const getCartDetails = async ()=>{
+        if(user){
+            let formData = new FormData();
+            const userId = user?.id;
+            formData.append("customerId",userId);
+            const cartDetails = await getCartDetailsApi(formData,token);
+            if(cartDetails?.status){
+                // console.log(cartDetails.cartList)
+                let subtotal=0;
+                cartDetails?.cartList?.forEach((product)=>{
+                    subtotal+=Number.parseFloat(product?.qty * product?.variantDetails?.price);
+                })
+                setSubTotal(()=>subtotal);
+                dispatch(
+                    setCart(
+                        {
+                            cart:cartDetails?.cartList,
+                        }
+                    )
+                )
+            }
+        }
+    }
+
+    const getAddress = async ()=>{
+        let formData = new FormData();
+        formData.append('customerId',user?.id);
+        const addressList = await getAllAddressApi(formData,token);
+        if(addressList?.status){
+            setAddressList(()=>addressList?.addressList);
+            setSelectedAddress(()=>addressList?.addressList?.[0]);
+            // console.log(addressList?.addressList?.[0])
+        }
+    }
+
+    const getShippingCharge = async ()=>{
+        let formData = new FormData();
+        formData.append('customerPostalCode',selectedAddress?.customerPincode);
+        const charge = await getShippingChargeApi(formData,token);
+        if(charge?.status){
+            setShippingCharge(()=>Number.parseFloat(charge?.shippingPrice));
+        }
+    }
+
+    useEffect(()=>{
+        getCartDetails();
+        getAddress();        
+    },[])
+
+    useEffect(()=>{
+        getShippingCharge();
+    },[subTotal])
+
+    useEffect(()=>{
+        setOrderTotal(()=>subTotal+shippingCharge)
+    },[subTotal,shippingCharge])
 
     return (
         <>
@@ -505,29 +581,72 @@ function Checkout() {
                                 <div className="py-3 border-b">
                                     <div className="flex justify-between py-2">
                                         <div>Cart Subtotal</div>
-                                        <div>$300.00</div>
+                                        <div>${subTotal || 0}</div>
                                     </div>
                                     <div className="flex justify-between items-center py-2">
                                         <div className="flex flex-col">
                                             <div className="pb-1">Shipping</div>
-                                            <div className="opacity-80">Free Shipping - Free</div>
+                                            {/* <div className="opacity-80">Free Shipping - Free</div> */}
+                                            <div className="opacity-80">Shipping Charge:</div>
                                         </div>
-                                        <div>$300.00</div>
+                                        <div>${shippingCharge}</div>
                                     </div>
                                     <div className="flex justify-between py-2">
                                         <div>Order Total</div>
-                                        <div>$300.00</div>
+                                        <div>${orderTotal || 0}</div>
                                     </div>
                                 </div>
 
                                 <div className="py-3 border-b">
                                     <div className="py-2 font-normal text-base">
-                                        <div className="flex font-semibold justify-between py-2 text-base items-center">
+                                        {/* <div className="flex font-semibold justify-between py-2 text-base items-center">
                                             <div>1 Item in Cart</div>
-                                            <MdKeyboardArrowUp size={20} />
-                                        </div>
+                                            <MdKeyboardArrowUp size={20} className="cursor-pointer"/>
+                                        </div> */}
 
-                                        <ul>
+                                        <Accordion defaultExpanded={true} className=" transition-none" style={{ all:'unset' }}>
+                                            <AccordionSummary
+                                            className=" font-semibold cursor-pointer"
+                                            expandIcon={<MdKeyboardArrowDown size={20} className="cursor-pointer"/>}
+                                            style={{ padding:'unset'}}
+                                            >
+                                                {cartDetails?.length} Items in Cart
+                                            </AccordionSummary>
+                                            <AccordionDetails className="text-pretty" style={{padding:'unset'}}>
+                                                
+                                                <ul>
+                                                    {cartDetails?.map((product)=>{
+                                                        return (
+                                                            <li>
+                                                                <div className="flex py-4 border-b">
+                                                                    <div className="w-[100px] mr-3">
+                                                                        <img
+                                                                            className="border rounded-lg w-full"
+                                                                            src={`${product?.variantDetails?.variantImage}`}
+                                                                            alt=""
+                                                                        />
+                                                                    </div>
+                                                                    <div className="flex flex-col justify-between w-full">
+                                                                        <p className="text-md font-semibold text-wrap">
+                                                                            {product?.productDetails?.productName}
+                                                                        </p>
+                                                                        <div className="flex text-gray-400 font-semibold">
+                                                                            Qty: {product?.qty}
+                                                                        </div>
+                                                                    </div>
+                                                                    <div className="text-gray-500 font-semibold px-2">
+                                                                        ${product?.variantDetails?.price}
+                                                                    </div>
+                                                                </div>
+                                                            </li>
+                                                        )
+                                                    })}
+                                                    
+                                                </ul>
+                                            </AccordionDetails>
+                                        </Accordion>
+
+                                        {/* <ul>
                                             <li>
                                                 <div className="flex py-4 border-b">
                                                     <div className="w-[100px] mr-3">
@@ -552,7 +671,7 @@ function Checkout() {
                                                     </div>
                                                 </div>
                                             </li>
-                                        </ul>
+                                        </ul> */}
                                     </div>
                                 </div>
 
@@ -560,13 +679,13 @@ function Checkout() {
                                     <div className="py-2 font-normal text-base">
                                         <div className="flex text-lg justify-between py-2 items-center">
                                             <div>Ship To:</div>
-                                            <FaRegEdit size={16} />
+                                            <FaRegEdit size={16} className="cursor-pointer" onClick={()=>navigate('/cart')}/>
                                         </div>
                                         <div className="py-2">
-                                            <div>fname lname addressline1 addressline2,</div>
-                                            <div>State</div>
-                                            <div>PinCode 390019</div>
-                                            <div>Ph Number</div>
+                                            <div>{user?.customerName}, {selectedAddress?.customerAddress}</div>
+                                            <div>{selectedAddress?.customerState}, {selectedAddress?.customerCity}-{selectedAddress?.customerPincode}</div>
+                                            
+                                            <div>Ph No: {user?.customerMobile}</div>
                                         </div>
                                     </div>
                                 </div>
@@ -575,7 +694,7 @@ function Checkout() {
                                     <div className="py-2 font-normal text-base">
                                         <div className="flex text-lg justify-between py-2 items-center">
                                             <div>Shipping Method:</div>
-                                            <FaRegEdit size={16} />
+                                            <FaRegEdit size={16} className="cursor-pointer" onClick={()=>navigate('/cart')}/>
                                         </div>
                                         <div className="py-2">
                                             <div>Free Shipping - Free</div>

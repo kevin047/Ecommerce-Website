@@ -1,6 +1,59 @@
-import React from 'react'
+import React, { useState } from 'react'
 import { FiMinus } from 'react-icons/fi';
 import { IoMdAdd } from 'react-icons/io';
+import Accordion from '@mui/material/Accordion';
+import AccordionSummary from '@mui/material/AccordionSummary';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import Typography from '@mui/material/Typography';
+
+const CustomAccordion = ({ title, content, id }) => {
+    return (
+      <div className="bg-white rounded-3xl px-6 py-4 h-fit">
+        <Accordion>
+          <AccordionSummary
+            expandIcon={
+                <IoMdAdd className="expand-icon-add" size={18} />
+            }
+            collapseIcon={
+                <FiMinus className="collapse-icon-minus" size={18} />
+            }
+            aria-controls={`panel${id}-content`}
+            id={`panel${id}-header`}
+            className="flex justify-between items-center font-semibold cursor-pointer"
+          >
+            <Typography>{title}</Typography>
+          </AccordionSummary>
+          <AccordionDetails className="text-pretty mt-4">
+            <Typography>{content}</Typography>
+          </AccordionDetails>
+        </Accordion>
+      </div>
+    );
+  };
+
+
+  const faqs = [
+    {
+      "id": "1",
+      "question": "Problems sending or receiving messages?",
+      "answer": "Curabitur lacinia purus vitae lorem porttitor fermentum. In in mattis erat mattis libero. Donec volutpat faucibus elit cursus interdum. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos."
+    },
+    {
+      "id": "2",
+      "question": "How to reset my password?",
+      "answer": "Aliquam erat volutpat. Aenean consequat velit eget odio suscipit, ac ultrices ex bibendum. Pellentesque sed orci ac felis vehicula posuere non in nulla. Maecenas nec eros sit amet ex elementum pretium."
+    },
+    {
+      "id": "3",
+      "question": "How do I update my profile information?",
+      "answer": "Sed auctor magna a nisi ullamcorper, at condimentum velit consequat. Proin vestibulum libero sit amet nisi gravida, non suscipit urna scelerisque. Nullam nec lectus a nibh consequat ullamcorper."
+    },
+    {
+      "id": "4",
+      "question": "Where can I find my purchase history?",
+      "answer": "Nullam nec lectus a nibh consequat ullamcorper. Sed auctor magna a nisi ullamcorper, at condimentum velit consequat. Proin vestibulum libero sit amet nisi gravida, non suscipit urna scelerisque."
+    }
+  ]
 
 function AboutUs() {
 
@@ -35,6 +88,8 @@ function AboutUs() {
 
         
     }
+
+    
 
   return (
     <>
@@ -105,6 +160,7 @@ function AboutUs() {
 
             <div className="my-4 -mx-10 max-md:-mx-2 py-20 bg-gray-100">
                 <div className="px-10 max-md:px-2">
+                
                     <div className="text-center">
                         <div className="text-sm uppercase mb-1 text-blue-400 font-semibold">
                             WHY CHOOSE US
@@ -113,11 +169,46 @@ function AboutUs() {
                         <p className='my-1 mx-auto md:w-[50vw]'>Over 20 years of experience, we have crafted thousands of strategic discovery process that enables us to peel back the layers which enable us to understand, connect.</p>
                     </div>
                     <div className="my-4">
-                        <div className=" grid grid-cols-1 sm:grid-cols-2 gap-10 max-sm:gap-5">
-                            <div className="bg-white rounded-3xl px-6 py-4 h-fit">
-                                <h4 className=" flex justify-between items-center font-semibold cursor-pointer " onClick={()=>{toggleAccordion(`faq-${'1'}`,`faq-btn-${'1'}`); }}>
+                        <div className=" grid grid-cols-1 sm:grid-cols-2 gap-8 max-sm:gap-5">
+                            
+                            {faqs.map((faq)=>{
+                                const [expanded,setExpanded] = useState(false);
+                                return (
+                                    <div className="bg-white rounded-3xl px-6 py-2 h-fit">
+                                    <Accordion onChange={()=>setExpanded((old)=>!old)} style={{ all:'unset' }}>
+                                        <AccordionSummary
+                                        aria-controls={`panel${1}-content`}
+                                        id={`panel${1}-header`}
+                                        className="flex justify-between items-center font-semibold cursor-pointer"
+                                        >
+                                        <div className="flex justify-between items-center w-full">
+                                            <span>{faq.question}</span>
+                                            <div>
+                                                {expanded ? (
+                                                    <FiMinus size={18} className="ml-2" />
+                                                ) : (
+                                                    <IoMdAdd size={18} className="ml-2" />
+                                                )}
+                                            </div>
+                                        </div>
+                                        </AccordionSummary>
+                                        <AccordionDetails className="text-pretty">
+                                        {faq.answer}
+                                        </AccordionDetails>
+                                    </Accordion>
+                                    </div>
+                                )
+                            })}
+                                {/* <h4 className=" flex justify-between items-center font-semibold cursor-pointer " onClick={()=>{toggleAccordion(`faq-${'1'}`,`faq-btn-${'1'}`); }}>
                                     <span>Problems sending or receiving messages?</span>
-                                    {/* {!isService ? <IoMdAdd size={18}/> : <FiMinus size={18}/>} */}
+                                    <IoMdAdd size={18} id={`faq-btn-${'1'}-plus`} className=''/>
+                                    <FiMinus size={18} id={`faq-btn-${'1'}-minus`} className='hidden'/>
+                                </h4>
+                                <p className='text-pretty mt-4 hidden overflow-hidden h-0 transition-all duration-500 ease-in-out' id={`faq-${'1'}`}>Curabitur lacinia purus vitae lorem porttitor fermentum. In in mattis erat mattis libero. Donec volutpat faucibus elit cursus interdum. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos.</p> */}
+                            
+                            {/* <div className="bg-white rounded-3xl px-6 py-4 h-fit">
+                                <h4 className=" flex justify-between items-center font-semibold cursor-pointer " onClick={()=>{toggleAccordion(`faq-${'1'}`,`faq-btn-${'1'}`); }}>
+                                    <span>Problems sending or receiving messages?</span>}
                                     <IoMdAdd size={18} id={`faq-btn-${'1'}-plus`} className=''/>
                                     <FiMinus size={18} id={`faq-btn-${'1'}-minus`} className='hidden'/>
                                 </h4>
@@ -126,21 +217,11 @@ function AboutUs() {
                             <div className="bg-white rounded-3xl px-6 py-4 h-fit">
                                 <h4 className=" flex justify-between items-center font-semibold cursor-pointer " onClick={()=>{toggleAccordion(`faq-${'1'}`,`faq-btn-${'1'}`); }}>
                                     <span>Problems sending or receiving messages?</span>
-                                    {/* {!isService ? <IoMdAdd size={18}/> : <FiMinus size={18}/>} */}
                                     <IoMdAdd size={18} id={`faq-btn-${'1'}-plus`} className=''/>
                                     <FiMinus size={18} id={`faq-btn-${'1'}-minus`} className='hidden'/>
                                 </h4>
                                 <p className='text-pretty mt-4 hidden overflow-hidden h-0 transition-all duration-500 ease-in-out' id={`faq-${'1'}`}>Curabitur lacinia purus vitae lorem porttitor fermentum. In in mattis erat mattis libero. Donec volutpat faucibus elit cursus interdum. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos.</p>
-                            </div>
-                            <div className="bg-white rounded-3xl px-6 py-4 h-fit">
-                                <h4 className=" flex justify-between items-center font-semibold cursor-pointer " onClick={()=>{toggleAccordion(`faq-${'1'}`,`faq-btn-${'1'}`); }}>
-                                    <span>Problems sending or receiving messages?</span>
-                                    {/* {!isService ? <IoMdAdd size={18}/> : <FiMinus size={18}/>} */}
-                                    <IoMdAdd size={18} id={`faq-btn-${'1'}-plus`} className=''/>
-                                    <FiMinus size={18} id={`faq-btn-${'1'}-minus`} className='hidden'/>
-                                </h4>
-                                <p className='text-pretty mt-4 hidden overflow-hidden h-0 transition-all duration-500 ease-in-out' id={`faq-${'1'}`}>Curabitur lacinia purus vitae lorem porttitor fermentum. In in mattis erat mattis libero. Donec volutpat faucibus elit cursus interdum. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos.</p>
-                            </div>
+                            </div> */}
                             
                         </div>
                     </div>
@@ -150,7 +231,7 @@ function AboutUs() {
 
             <div className="my-4 py-6 flex max-md:flex-col text-center">
                 <div className='md:mr-2 my-4 '>
-                    <img src="https://umino.bersky.co/media/wysiwyg/about_img_7.png" className='mx-auto' alt="" />
+                    <img src="https://umino.bersky.co/media/wysiwyg/about_img_7.png" className='mx-auto hover:scale-105 transition duration-300 ease-in-out' alt="" />
                     <h4 className=' font-semibold text-lg py-1 mt-2'>Helen Aleema</h4>
                     <h6 className='text-sm mb-2'>Founder/CEO</h6>
                     <p className="text-pretty text-sm">Class aptent taciti sociosqu ad litora torquent per conubia nostra per inceptos vel pretium lectus qua. Nunc id cursus metus ididunt ut labore metus episcing</p>
